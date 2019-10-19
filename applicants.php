@@ -71,13 +71,12 @@ while($applicant=$db->fetch_array($allApplicants)){
         $deadlineText = "<b>noch " . $deadlineDays . " Tage</b> bis " . $deadline;
     }
 
+    $buttonExtend = "";
     //Verlängern Button
     if ($applicant['corrector'] == null) {
         if (($email == $applicant['email'] && !$isExpired || $mybb->usergroup['canmodcp'] == 1) && $deadlineDays <= $alertDays && $applicant['extensionCtr'] < $timesToExtend) {
             $buttonExtend = '<i class="fas fa-plus extend" title="Frist verlängern" id="' .  $applicant['uid']  . '"></i> ';
-        } else {
-            $buttonExtend = "";
-        }
+        } 
     }
 
     eval("\$applicants .= \"".$templates->get("applicantsUser")."\";");
