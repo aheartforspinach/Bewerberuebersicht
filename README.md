@@ -1,4 +1,4 @@
-# Bewerberüberischt
+# Bewerberübersicht
 Das Plugin erstellt eine Liste aller Bewerber mit einer Frist wie lange sie noch Zeit haben für die Bewerbung. Jeder Bewerber kann seine Frist selber verlängern und Teammitglieder haben die Möglichkeit den Steckbrief für die Korrektur zu übernehmen. Dies geschieht entweder über einen Button auf der neu angelegten PHP-Seite oder über einen optisch identischen Button hinter dem Beitrag im Steckbriefbereich. Optional wird der Bewerber per PN über die Übernahme informiert.
 Bei einer auslaufenden Frist wird der Bewerber über einen Banner informiert.
 
