@@ -16,6 +16,8 @@ function applicants_info()
     );
 }
 
+
+
 function applicants_install()
 {
     global $db, $cache, $mybb;
@@ -276,8 +278,7 @@ function applicants_forumdisplay_thread()
     $applicantUid = $thread['uid'];
     //einfügen vom Button zur Korrekturübernahme
     if ($mybb->input['fid'] == $applicationFid) { //nur wenn Bewerbungsbereich ausführen
-        $query = $db->simple_select("applicants", "corrector", "uid = '$applicantUid'");
-        $correctors = $db->fetch_array($query);
+        $correctors = $db->fetch_array($db->simple_select("applicants", "corrector", "uid = '$applicantUid'"));
         if ($correctors['corrector'] != null) {
             $corrector = '<div><b>Korrigiert: </b>' . $correctors['corrector'] . '</div>';
         }

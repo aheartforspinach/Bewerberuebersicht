@@ -28,21 +28,15 @@ if(isset($_GET["applicantId"]) && $mybb->usergroup['canmodcp'] == 1){
 }
 
 //alle Bewerber
-$allApplicants = $db->query("SELECT *
-FROM ".TABLE_PREFIX."applicants
-ORDER BY expirationDate");
-
+$allApplicants = $db->simple_select('applicants', '*', '', array("order_by" => 'expirationDate',));
 
 while($applicant=$db->fetch_array($allApplicants)){
-    $username = "";
+    $username = build_profile_link($applicant['username'], $applicant['uid']);
     $corrector = "";
     $deadline = "";
     $deadlineDays = "";
     $deadlineText = "";
     $correctionButton ="";
-
-    // Bewerbernamen bauen
-    $username = build_profile_link($applicant['username'], $applicant['uid']);
 
     //Korrektornamen bauen
     if($applicant['corrector'] != NULL){
