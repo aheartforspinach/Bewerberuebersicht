@@ -32,7 +32,7 @@ __Einstellungen des Bewerberübersicht-Plugin__
 ![Bewerberübersicht Einstellungen](https://beforestorm.de/imageUpload/plugins/applicants_settings.png)
 
 __Bewerberübersichtseite__
-![Bewerberübersichtseite](http://beforestorm.de/imageUpload/plugins/applicants_overview.png)
+![Bewerberübersichtseite](https://beforestorm.de/imageUpload/plugins/applicants_overview.png)
 
 __Ansicht des Bewerberbereichs__
-![Ansicht des Bewerberbereichs](hhttp://beforestorm.de/imageUpload/plugins/applicants_thread.png)
+![Ansicht des Bewerberbereichs](https://beforestorm.de/imageUpload/plugins/applicants_thread.png)
