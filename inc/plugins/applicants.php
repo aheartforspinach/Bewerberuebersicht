@@ -86,26 +86,33 @@ function applicants_install()
             'value' => '0', // Default
             'disporder' => 6
         ),
+        'applicants_gid' => array(
+            'title' => 'Bewerbergruppe',
+            'description' => 'Wie lautet die Gruppen-Id von Bewerbern?',
+            'optionscode' => 'text',
+            'value' => '2', // Default
+            'disporder' => 7
+        ),
         'applicants_player' => array(
             'title' => 'Spielerprofilfeld',
             'description' => 'Gib die FID vom Profilfeld an, wo User ihren Spielernamen angeben.',
             'optionscode' => 'text',
             'value' => '0', // Default
-            'disporder' => 7
+            'disporder' => 8
         ),
         'applicants_pmAlert' => array(
             'title' => 'PN-Benachrichtigung',
             'description' => 'Sollen Bewerber per PN benachrichtigt werden, wenn der Steckbrief übernommen wurde?',
             'optionscode' => 'yesno',
             'value' => 1, // Default
-            'disporder' => 8
+            'disporder' => 9
         ),
         'applicants_pmText' => array(
             'title' => 'PN-Text',
             'description' => 'Der Standardtext, welcher versendet wird, wenn einer den Steckbief übernimmt, sofern es erlaubt ist. Das ; trennt PN-Titel und PN-Text. Zeilenumbrüche müssen mit <"br"> (ohne ") erfolgen',
             'optionscode' => 'textarea',
             'value' => 'Ich hab deinen Steckbrief übernommen!;Hey, ich habe deinen Steckbrief übernommen und werde ihn so bald wie möglich korrigieren!', // Default
-            'disporder' => 9
+            'disporder' => 10
         ),
     );
 
@@ -213,6 +220,16 @@ function applicants_install()
     );
     $db->insert_query("templates", $insert_array);
 
+    //Template applicantHeaderTeam bauen
+    $insert_array = array(
+        'title'        => 'applicantHeaderTeam',
+        'template'    => $db->escape_string('<div class="red_alert">{$deadlineText} ausgelaufen.</div>'),
+        'sid'        => '-1',
+        'version'    => '',
+        'dateline'    => TIME_NOW
+    );
+    $db->insert_query("templates", $insert_array);
+
     rebuild_settings();
 }
 
@@ -228,9 +245,9 @@ function applicants_is_installed()
 function applicants_uninstall()
 {
     global $db;
-    $db->delete_query('settings', "name IN('applicants_time', 'applicants_fid', 'applicants_alert', 'applicants_teamaccount', 'applicants_extend', 'applicants_player', 'applicants_pmAlert', 'applicants_pmText')");
+    $db->delete_query('settings', "name IN('applicants_time', 'applicants_fid', 'applicants_alert', 'applicants_teamaccount', 'applicants_extend','applicants_gid', 'applicants_player', 'applicants_pmAlert', 'applicants_pmText')");
     $db->delete_query('settinggroups', "name = 'applicants'");
-    $db->delete_query("templates", "title IN('applicants', 'applicantsUser', 'applicantsHeader')");
+    $db->delete_query("templates", "title IN('applicants', 'applicantsUser', 'applicantsHeader', 'applicantsUserTeam')");
     if ($db->table_exists("applicants")) {
         $db->drop_table("applicants");
     }
@@ -297,6 +314,7 @@ function applicants_alert()
     $today = new DateTime(date("Y-m-d", time())); //heute
     $timeForApplication = intval($mybb->settings['applicants_time']);
     $alertDays = intval($mybb->settings['applicants_alert']);
+    $applicantGid = intval($mybb->settings['applicants_gid']);
     $email = $mybb->user['email'];
     $deadlineDays = "";
     $deadlineText = "";
@@ -315,7 +333,7 @@ function applicants_alert()
     // alte Bewerber rausschmeißen
     $allExApplicants = $db->query("SELECT uid
     FROM " . TABLE_PREFIX . "users
-    WHERE usergroup != 2 AND uid IN(
+    WHERE usergroup != $applicantGid AND uid IN(
     SELECT uid 
     FROM " . TABLE_PREFIX . "applicants)");
 
@@ -326,7 +344,7 @@ function applicants_alert()
     // neue Bewerber hinzufügen
     $allApplicants = $db->query("SELECT uid, email, regdate, username
     FROM " . TABLE_PREFIX . "users
-    WHERE usergroup = 2 AND uid NOT IN(
+    WHERE usergroup = $applicantGid AND uid NOT IN(
         SELECT uid 
         FROM " . TABLE_PREFIX . "applicants
     )");
