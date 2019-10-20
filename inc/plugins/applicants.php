@@ -395,10 +395,7 @@ function applicants_alert()
 
     //nur für Teammitglieder: abgelaufene Bewerbungen
     if ($mybb->usergroup['canmodcp'] == 1) {
-        $today = date("Y-m-d", time());
-
-        $deadlineAmount = $db->simple_select('applicants', 'COUNT(uid)', "expirationDate = '". $today ."' AND corrector IS null");
-        $deadlineUserCount = $db->fetch_array($deadlineAmount)["COUNT(uid)"];
+        $deadlineUserCount = $db->fetch_array($db->simple_select('applicants', 'COUNT(uid)', "expirationDate < '". $today->format('Y-m-d') ."' AND corrector IS null"))["COUNT(uid)"];
         if ($deadlineUserCount == 1) {
             $deadlineText = 'Es ist ingesamt eine <a href="/applicants.php">Bewerbungsfrist</a>';
         } else if ($deadlineUserCount > 1) {
