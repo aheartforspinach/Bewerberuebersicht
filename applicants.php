@@ -7,6 +7,10 @@ global $db, $templates, $mybb;
 $email = $mybb->user['email'];
 $today = new DateTime(date("Y-m-d", time())); //heute
 
+if(!$db->table_exists("applicants")) {
+    die("Die Bewerberliste ist zur Zeit nicht installiert.");
+}
+
 //Einstellungen holen
 $alertDays = intval($mybb->settings['applicants_alert']);
 $timeForApplication = intval($mybb->settings['applicants_time']);
@@ -74,9 +78,14 @@ while($applicant=$db->fetch_array($allApplicants)){
     $buttonExtend = "";
     //Verlängern Button
     if ($applicant['corrector'] == null) {
-        if (($email == $applicant['email'] && !$isExpired || $mybb->usergroup['canmodcp'] == 1) && $deadlineDays <= $alertDays && $applicant['extensionCtr'] < $timesToExtend) {
+        //user
+        if(!$mybb->usergroup['canmodcp'] == 1){
+            if($email == $applicant['email'] && !$isExpired && $deadlineDays <= $alertDays && $applicant['extensionCtr'] < $timesToExtend){
+                $buttonExtend = '<i class="fas fa-plus extend" title="Frist verlängern" id="' .  $applicant['uid']  . '"></i> ';
+            }
+        }else { //team
             $buttonExtend = '<i class="fas fa-plus extend" title="Frist verlängern" id="' .  $applicant['uid']  . '"></i> ';
-        } 
+        }
     }
 
     eval("\$applicants .= \"".$templates->get("applicantsUser")."\";");
@@ -128,4 +137,3 @@ function correction($uid){
 
 eval("\$page = \"".$templates->get("applicants")."\";");
 output_page($page);
-?>
