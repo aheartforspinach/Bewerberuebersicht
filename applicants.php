@@ -31,6 +31,18 @@ if(isset($_GET["applicantId"]) && $mybb->usergroup['canmodcp'] == 1){
     correction($applicantUid);
 }
 
+//Frist verlängern
+if($_POST["action"] == "extend"){
+    $uid = $_POST["id"];
+    $db->query("UPDATE ".TABLE_PREFIX."applicants SET expirationDate = DATE_ADD(expirationDate, INTERVAL +$timeframeExtension day),extensionCtr = extensionCtr + 1  WHERE uid = $uid");
+}
+
+//Steckbrief übernehmen
+if($_POST["action"] == "correction"){
+    $uid = $_POST["id"];
+    correction($uid);
+}
+
 //alle Bewerber
 $allApplicants = $db->simple_select('applicants', '*', '', array("order_by" => 'expirationDate',));
 
@@ -42,11 +54,12 @@ while($applicant=$db->fetch_array($allApplicants)){
     $deadlineText = "";
     $correctionButton ="";
 
+    $applicationThread = $db->fetch_array($db->simple_select('threads', 'subject', 'uid = '. $applicant['uid'].' AND fid = '. $applicationFid))['subject'];
     //Korrektornamen bauen
     if($applicant['corrector'] != NULL){
         $corrector = "Es korrigiert <b>" . $applicant['corrector'] . "</b>";
     }else{
-        if($mybb->usergroup['canmodcp'] == 1){
+        if($mybb->usergroup['canmodcp'] == 1 && $applicationThread != ''){
             $corrector = "";
             $correctionButton = '<i class="fas fa-check correction" title="Steckbrief übernehmen?" id="' .  $applicant['uid']  . '"></i>';
         }else{
@@ -89,18 +102,6 @@ while($applicant=$db->fetch_array($allApplicants)){
     }
 
     eval("\$applicants .= \"".$templates->get("applicantsUser")."\";");
-}
-
-//Frist verlängern
-if($_POST["action"] == "extend"){
-    $uid = $_POST["id"];
-    $db->query("UPDATE ".TABLE_PREFIX."applicants SET expirationDate = DATE_ADD(expirationDate, INTERVAL +$timeForApplication day),extensionCtr = extensionCtr + 1  WHERE uid = $uid");
-}
-
-//Steckbrief übernehmen
-if($_POST["action"] == "correction"){
-    $uid = $_POST["id"];
-    correction($uid);
 }
 
 //Steckbriefübernahme
