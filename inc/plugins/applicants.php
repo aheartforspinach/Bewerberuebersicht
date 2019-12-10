@@ -25,7 +25,6 @@ function applicants_install()
     if ($db->engine == 'mysql' || $db->engine == 'mysqli') {
         $db->query("CREATE TABLE `" . TABLE_PREFIX . "applicants` (
         `uid` int(11) unsigned NOT NULL,
-        `username` VARCHAR(264),
         `email` VARCHAR(50),
         `corrector` VARCHAR(25),
         `expirationDate` date,
@@ -222,7 +221,7 @@ function applicants_install()
 
     //Template applicantHeaderTeam bauen
     $insert_array = array(
-        'title'        => 'applicantHeaderTeam',
+        'title'        => 'applicantsHeaderTeam',
         'template'    => $db->escape_string('<div class="red_alert">{$deadlineText} ausgelaufen.</div>'),
         'sid'        => '-1',
         'version'    => '',
@@ -342,7 +341,7 @@ function applicants_alert()
     }
 
     // neue Bewerber hinzufügen
-    $allApplicants = $db->query("SELECT uid, email, regdate, username
+    $allApplicants = $db->query("SELECT uid, email, regdate
     FROM " . TABLE_PREFIX . "users
     WHERE usergroup = $applicantGid AND uid NOT IN(
         SELECT uid 
@@ -356,7 +355,6 @@ function applicants_alert()
 
         $insertApplicant = array(
             'uid' => $applicant['uid'],
-            'username' => $applicant['username'],
             'email' => $applicant['email'],
             'expirationDate' => $applicationDeadline->format('Y-m-d'),
             'extensionCtr' => 0
@@ -366,17 +364,22 @@ function applicants_alert()
     }
 
     // Meldung zusammenbauen
-    $allApplicants = $db->simple_select('applicants', 'username, expirationDate', "email = '". $email ."' AND corrector IS null");
+    $allApplicants = $db->simple_select('applicants', 'uid, expirationDate', "email = '". $email ."' AND corrector IS null");
     while ($applicant = $db->fetch_array($allApplicants)) {
         $expiration = new DateTime($applicant['expirationDate']);
         $interval = $expiration->diff($today);
         $deadline = $expiration->format('d.m.Y');
         $deadlineDays = $interval->d;
+
+        if($interval->m != 0){
+            continue;
+        }
+
         $isExpired = false;
         if($expiration->format('Y-m-d') < $today->format('Y-m-d')){
             $isExpired = true;
         }
-        $applicant = $applicant['username'];
+        $applicant = get_user($applicant['uid'])['username'];
 
         if ($isExpired) {
             $deadlineText = "ist <b>abgelaufen</b>.";
@@ -395,7 +398,7 @@ function applicants_alert()
 
     //nur für Teammitglieder: abgelaufene Bewerbungen
     if ($mybb->usergroup['canmodcp'] == 1) {
-        $deadlineUserCount = $db->fetch_array($db->simple_select('applicants', 'COUNT(uid)', "expirationDate < '". $today->format('Y-m-d') ."' AND corrector IS null"))["COUNT(uid)"];
+        $deadlineUserCount = (int)$db->fetch_array($db->simple_select('applicants', 'COUNT(uid)', "expirationDate < '". $today->format('Y-m-d') ."' AND corrector IS null"))["COUNT(uid)"];
         if ($deadlineUserCount == 1) {
             $deadlineText = 'Es ist ingesamt eine <a href="/applicants.php">Bewerbungsfrist</a>';
         } else if ($deadlineUserCount > 1) {
