@@ -47,12 +47,14 @@ if($_POST["action"] == "correction"){
 $allApplicants = $db->simple_select('applicants', '*', '', array("order_by" => 'expirationDate',));
 
 while($applicant=$db->fetch_array($allApplicants)){
-    $username = build_profile_link($applicant['username'], $applicant['uid']);
-    $corrector = "";
-    $deadline = "";
-    $deadlineDays = "";
-    $deadlineText = "";
-    $correctionButton ="";
+    $user = get_user($applicant['uid']);
+    $username =  build_profile_link($user['username'], $applicant['uid']);
+    $corrector = '';
+    $deadline = '';
+    $deadlineDays = '';
+    $deadlineText = '';
+    $correctionButton = '';
+    $correction = '';
 
     $applicationThread = $db->fetch_array($db->simple_select('threads', 'subject', 'uid = '. $applicant['uid'].' AND fid = '. $applicationFid))['subject'];
     //Korrektornamen bauen
@@ -80,6 +82,8 @@ while($applicant=$db->fetch_array($allApplicants)){
 
     if ($applicant['corrector'] != null) {
         $deadlineText = "unter Korrektur";
+        $correctionDate = new DateTime($applicant['correctionDate']);
+        $correction = 'seit dem '. $correctionDate->format('d.m.Y');
     } else if ($isExpired) {
         $deadlineText = "abgelaufen";
     } else if ($deadlineDays == 1){
@@ -108,7 +112,9 @@ while($applicant=$db->fetch_array($allApplicants)){
 function correction($uid){
     global $db, $pmAlert, $mybb, $playerFid;
     $corrector = $mybb->user['fid'. $playerFid];
-    $db->query("UPDATE ".TABLE_PREFIX."applicants SET corrector = '$corrector' WHERE uid = $uid");
+    $today = new DateTime(date("Y-m-d", time())); //heute
+    $update = array('corrector' => $corrector, 'correctionDate' => $today->format('Y-m-d'));
+    $db->update_query('applicants', $update, 'uid = '. $uid);
 
     //Pn verschicken
     if ($pmAlert) {
