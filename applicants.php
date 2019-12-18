@@ -113,7 +113,7 @@ function correction($uid){
     global $db, $pmAlert, $mybb, $playerFid;
     $corrector = $mybb->user['fid'. $playerFid];
     $today = new DateTime(date("Y-m-d", time())); //heute
-    $update = array('corrector' => $corrector, 'correctionDate' => $today->format('Y-m-d'));
+    $update = array('corrector' => $corrector);
     $db->update_query('applicants', $update, 'uid = '. $uid);
 
     //Pn verschicken
