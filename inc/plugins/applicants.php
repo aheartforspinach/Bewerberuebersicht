@@ -47,7 +47,7 @@ function applicants_install()
             'title' => 'Zeit für die Bewerbung',
             'description' => 'Wie lange haben Bewerber Zeit die Bewerbung fertig zu schreiben? WICHTIG: in Tagen angeben',
             'optionscode' => 'text',
-            'value' => '14', // Default
+            'value' => '0', // Default
             'disporder' => 1
         ),
         'applicants_extendTimes' => array(
@@ -81,14 +81,14 @@ function applicants_install()
         'applicants_fid' => array(
             'title' => 'FID des Bewerbungsforums',
             'description' => 'Wie lautet die FID des Forums, wo User ihre fertigen Steckbriefe posten?',
-            'optionscode' => 'text',
+            'optionscode' => 'forumselectsingle',
             'value' => '0', // Default
             'disporder' => 6
         ),
         'applicants_gid' => array(
             'title' => 'Bewerbergruppe',
             'description' => 'Wie lautet die Gruppen-Id von Bewerbern?',
-            'optionscode' => 'text',
+            'optionscode' => 'groupselectsingle',
             'value' => '2', // Default
             'disporder' => 7
         ),
@@ -126,9 +126,8 @@ function applicants_install()
     $insert_array = array(
         'title'        => 'applicants',
         'template'    => $db->escape_string('<html xml:lang="de" lang="de" xmlns="http://www.w3.org/1999/xhtml">
-
         <head>
-            <title>{$mybb->settings[\'bbname\']} - Bewerberfristen</title>
+            <title>{$mybb->settings[\'bbname\']} - {$lang->applicants_page_title}</title>
             {$headerinclude}
         </head>
         
@@ -136,18 +135,18 @@ function applicants_install()
             {$header}
             <div class="panel" id="panel">
                 <div id="panel">$menu</div>
-                <h1>Bewerberfristen</h1>
-				<blockquote>Hier ist eine kleine Übersicht darüber wer für seine Bewerbung wie lange noch Zeit hat. Zudem könnt ihr hier eure eigene Frist verlängern, falls euch die Zeit nicht reichen sollte. Falls ihr nach der Verlängerung immer noch ein wenig Zeit braucht, wendet euch bitte einfach an das Team :)<br><br>
+                <h1>{$lang->applicants_page_title}</h1>
+				<blockquote>{$lang->applicants_page_info}<br><br>
 				<table width="100%">
 					<tr>
 						<td class="thead" width="33%">
-							Charaktername
+                        {$lang->applicants_page_charaname}
 						</td>
 						<td class="thead" width="33%">
-							verbleibene Tage
+                        {$lang->applicants_page_extension}
 						</td>
 						<td class="thead" width="33%">
-							Korrektur
+                        {$lang->applicants_page_correction}
 						</td>
 					</tr>
 					{$applicants}
@@ -170,7 +169,6 @@ function applicants_install()
         	})
         }
     });
-
    $(\'.correction\').click(function () {
     if (confirm("Möchtest du den Steckbrief übernehmen?")) {
         $.post("applicants.php", {
@@ -200,7 +198,7 @@ function applicants_install()
             {$deadlineText}
         </td>
         <td>
-            {$corrector} {$correctionButton}
+            {$corrector} {$correctionButton} {$reverseButton}
         </td>
     </tr>'),
         'sid'        => '-1',
@@ -212,7 +210,7 @@ function applicants_install()
     //Template applicantHeader bauen
     $insert_array = array(
         'title'        => 'applicantsHeader',
-        'template'    => $db->escape_string('<div class="red_alert">Deine <a href="/applicants.php">Bewerbungsfrist</a> für {$applicant} {$deadlineText}</div>'),
+        'template'    => $db->escape_string('<div class="red_alert">{$bannerText}</div>'),
         'sid'        => '-1',
         'version'    => '',
         'dateline'    => TIME_NOW
@@ -222,12 +220,57 @@ function applicants_install()
     //Template applicantHeaderTeam bauen
     $insert_array = array(
         'title'        => 'applicantsHeaderTeam',
-        'template'    => $db->escape_string('<div class="red_alert">{$deadlineText} ausgelaufen.</div>'),
+        'template'    => $db->escape_string('<div class="red_alert">{$bannerText}</div>'),
         'sid'        => '-1',
         'version'    => '',
         'dateline'    => TIME_NOW
     );
     $db->insert_query("templates", $insert_array);
+
+//Template applicantsReversePage bauen
+$insert_array = array(
+    'title'        => 'applicantsReversePage',
+    'template'    => $db->escape_string('<html>
+    <head>
+    <title>{$mybb->settings[\'bbname\']} - {$lang->applicants_submitpage_title}</title>
+    {$headerinclude}
+    </head>
+    <body>
+    {$header}
+    <form action="applicants.php" method="post">
+    <table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
+    <tr>
+    <td class="thead" colspan="2"><strong>{$lang->applicants_submitpage_title}</strong></td>
+    </tr>
+        <tr>
+            <td>
+                <center>Bewerberfrist zurücksetzen? (startet an dem heutigen Tag neu)<br>
+                <input type="radio" id="start_yes" name="applicationStart" value="yes">
+      <label for="start_yes">Ja</label><br>
+                    <input type="radio" id="start_no" name="applicationStart" value="no" checked>
+      <label for="start_no">Nein</label><br></center>
+                
+                <center>Kontrolle zurücksetzen?<br>
+                <input type="radio" id="control_yes" name="applicationControl" value="yes">
+      <label for="control_yes">Ja</label><br>
+                    <input type="radio" id="control_no" name="applicationControl" value="no" checked>
+      <label for="control_no">Nein</label><br></center>
+            </td>
+        </tr>
+    </table>
+    <br />
+    <div align="center"><input type="submit" class="button" name="submit" value="{$lang->applicants_submitpage_submit}" /></div>
+    <input type="hidden" name="action" value="reverse" />
+    <input type="hidden" name="aid" value="{$aid}" />
+    </form>
+    {$footer}
+    </body>
+    </html>'),
+    'sid'        => '-1',
+    'version'    => '',
+    'dateline'    => TIME_NOW
+);
+$db->insert_query("templates", $insert_array);
 
     rebuild_settings();
 }
@@ -246,7 +289,7 @@ function applicants_uninstall()
     global $db;
     $db->delete_query('settings', "name IN('applicants_time', 'applicants_fid', 'applicants_alert', 'applicants_teamaccount', 'applicants_extend','applicants_gid', 'applicants_player', 'applicants_pmAlert', 'applicants_pmText')");
     $db->delete_query('settinggroups', "name = 'applicants'");
-    $db->delete_query("templates", "title IN('applicants', 'applicantsUser', 'applicantsHeader', 'applicantsHeaderTeam')");
+    $db->delete_query("templates", "title IN('applicants', 'applicantsUser', 'applicantsHeader', 'applicantsHeaderTeam', 'applicantsReversePage')");
     if ($db->table_exists("applicants")) {
         $db->drop_table("applicants");
     }
@@ -308,87 +351,43 @@ function applicants_forumdisplay_thread()
 $plugins->add_hook('global_intermediate', 'applicants_alert');
 function applicants_alert()
 {
-    global $db, $mybb, $templates, $header_applicants;
+    global $db, $mybb, $templates, $header_applicants, $lang;
 
     $today = new DateTime(date("Y-m-d", time())); //heute
-    $timeForApplication = intval($mybb->settings['applicants_time']);
     $alertDays = intval($mybb->settings['applicants_alert']);
-    $applicantGid = intval($mybb->settings['applicants_gid']);
     $email = $mybb->user['email'];
     $deadlineDays = "";
     $deadlineText = "";
+    $lang->load('applicants');
 
-    //gelöschte User rausschmeißen
-    $allDeletedApplicants = $db->query("SELECT uid
-    FROM " . TABLE_PREFIX . "applicants
-    WHERE uid NOT IN(
-    SELECT uid 
-    FROM " . TABLE_PREFIX . "users)");
-
-    while ($deletedApplicants = $db->fetch_array($allDeletedApplicants)) {
-        $db->delete_query('applicants', 'uid = '. $deletedApplicants['uid']);
-    }
-
-    // alte Bewerber rausschmeißen
-    $allExApplicants = $db->query("SELECT uid
-    FROM " . TABLE_PREFIX . "users
-    WHERE usergroup != $applicantGid AND uid IN(
-    SELECT uid 
-    FROM " . TABLE_PREFIX . "applicants)");
-
-    while ($exApplicant = $db->fetch_array($allExApplicants)) {
-        $db->delete_query('applicants', 'uid = '. $exApplicant['uid']);
-    }
-
-    // neue Bewerber hinzufügen
-    $allApplicants = $db->query("SELECT uid, email, regdate
-    FROM " . TABLE_PREFIX . "users
-    WHERE usergroup = $applicantGid AND uid NOT IN(
-        SELECT uid 
-        FROM " . TABLE_PREFIX . "applicants
-    )");
-
-    while ($applicant = $db->fetch_array($allApplicants)) {
-        $applicationDeadline = new DateTime();
-        $applicationDeadline->setTimestamp($applicant['regdate']);
-        date_add($applicationDeadline, date_interval_create_from_date_string($timeForApplication. 'days'));
-
-        $insertApplicant = array(
-            'uid' => $applicant['uid'],
-            'email' => $applicant['email'],
-            'expirationDate' => $applicationDeadline->format('Y-m-d'),
-            'extensionCtr' => 0
-        );
-
-        $db->insert_query('applicants', $insertApplicant);
-    }
+    updateDatabase();
 
     // Meldung zusammenbauen
-    $allApplicants = $db->simple_select('applicants', 'uid, expirationDate', "email = '". $email ."' AND corrector IS null");
+    $allApplicants = $db->simple_select('applicants', 'uid, expirationDate', "email = '" . $email . "' AND corrector IS null");
     while ($applicant = $db->fetch_array($allApplicants)) {
         $expiration = new DateTime($applicant['expirationDate']);
         $interval = $expiration->diff($today);
         $deadline = $expiration->format('d.m.Y');
         $deadlineDays = $interval->d;
 
-        if($interval->m != 0){
+        if ($interval->m != 0) {
             continue;
         }
 
         $isExpired = false;
-        if($expiration->format('Y-m-d') < $today->format('Y-m-d')){
+        if ($expiration->format('Y-m-d') < $today->format('Y-m-d')) {
             $isExpired = true;
         }
         $applicant = get_user($applicant['uid'])['username'];
 
         if ($isExpired) {
-            $deadlineText = "ist <b>abgelaufen</b>.";
-        }else if ($deadlineDays == 0) {
-            $deadlineText = "läuft <b>heute</b> ab.";
+            $bannerText = $lang->sprintf($lang->applicants_banner_user_expired, $applicant);
+        } else if ($deadlineDays == 0) {
+            $bannerText = $lang->sprintf($lang->applicants_banner_user, $applicant, '<b>heute</b>');
         } else if ($deadlineDays == 1) {
-            $deadlineText = "läuft <b>morgen</b> ab.";
+            $bannerText = $lang->sprintf($lang->applicants_banner_user, $applicant, '<b>morgen</b>');
         } else if ($deadlineDays <= $alertDays) {
-            $deadlineText = "läuft in <b>" . $deadlineDays . " Tagen</b> aus.";
+            $bannerText = $lang->sprintf($lang->applicants_banner_user, $applicant, 'in <b>' . $deadlineDays . ' Tagen</b>');
         } else {
             continue;
         }
@@ -398,15 +397,69 @@ function applicants_alert()
 
     //nur für Teammitglieder: abgelaufene Bewerbungen
     if ($mybb->usergroup['canmodcp'] == 1) {
-        $deadlineUserCount = (int)$db->fetch_array($db->simple_select('applicants', 'COUNT(uid)', "expirationDate < '". $today->format('Y-m-d') ."' AND corrector IS null"))["COUNT(uid)"];
+        $deadlineUserCount = (int) $db->fetch_array($db->simple_select('applicants', 'COUNT(uid)', "expirationDate < '" . $today->format('Y-m-d') . "' AND corrector IS null"))["COUNT(uid)"];
         if ($deadlineUserCount == 1) {
-            $deadlineText = 'Es ist ingesamt eine <a href="/applicants.php">Bewerbungsfrist</a>';
+            $bannerText =  $lang->sprintf($lang->applicants_banner_team, 'ist', 'eine', 'Bewerberfrist');
         } else if ($deadlineUserCount > 1) {
-            $deadlineText = 'Es sind insgesamt ' . $deadlineUserCount . ' <a href="/applicants.php">Bewerbungsfristen</a>';
+            $bannerText = $lang->sprintf($lang->applicants_banner_team, 'sind', $deadlineUserCount, 'Bewerberfristen');
         } else {
             return;
         }
 
         eval("\$header_applicants .= \"" . $templates->get("applicantsHeaderTeam") . "\";");
+    }
+}
+
+function updateDatabase()
+{
+    global $db, $mybb;
+    $applicantGid = intval($mybb->settings['applicants_gid']);
+    $timeForApplication = intval($mybb->settings['applicants_time']);
+
+    //gelöschte User rausschmeißen
+    $allDeletedApplicants = $db->query("SELECT uid
+        FROM " . TABLE_PREFIX . "applicants
+        WHERE uid NOT IN(
+        SELECT uid 
+        FROM " . TABLE_PREFIX . "users)");
+
+    while ($deletedApplicants = $db->fetch_array($allDeletedApplicants)) {
+        $db->delete_query('applicants', 'uid = ' . $deletedApplicants['uid']);
+    }
+
+    // alte Bewerber rausschmeißen
+    $allExApplicants = $db->query("SELECT uid
+        FROM " . TABLE_PREFIX . "users
+        WHERE usergroup != $applicantGid AND uid IN(
+        SELECT uid 
+        FROM " . TABLE_PREFIX . "applicants)");
+
+    while ($exApplicant = $db->fetch_array($allExApplicants)) {
+        $db->delete_query('applicants', 'uid = ' . $exApplicant['uid']);
+    }
+
+    if ($timeForApplication != 0) {
+        // neue Bewerber hinzufügen
+        $allApplicants = $db->query("SELECT uid, email, regdate
+        FROM " . TABLE_PREFIX . "users
+        WHERE usergroup = $applicantGid AND uid NOT IN(
+            SELECT uid 
+            FROM " . TABLE_PREFIX . "applicants
+        )");
+
+        while ($applicant = $db->fetch_array($allApplicants)) {
+            $applicationDeadline = new DateTime();
+            $applicationDeadline->setTimestamp($applicant['regdate']);
+            date_add($applicationDeadline, date_interval_create_from_date_string($timeForApplication . 'days'));
+
+            $insertApplicant = array(
+                'uid' => $applicant['uid'],
+                'email' => $applicant['email'],
+                'expirationDate' => $applicationDeadline->format('Y-m-d'),
+                'extensionCtr' => 0
+            );
+
+            $db->insert_query('applicants', $insertApplicant);
+        }
     }
 }
