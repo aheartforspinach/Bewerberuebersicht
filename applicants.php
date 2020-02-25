@@ -32,6 +32,7 @@ if ($mybb->input['action'] == 'reverseSite') {
         redirect('applicants.php', $lang->applicants_submitpage_fail);
     }
     $aid = $mybb->input['uid'];
+    $infoText =$lang->sprintf($lang->applicants_submitpage_text, get_user($aid)['username']);
 
     eval("\$page = \"" . $templates->get("applicantsReversePage") . "\";");
     output_page($page);
@@ -54,12 +55,12 @@ if ($_POST['action']  ==  'reverse') {
         $applicationDeadline->setTimestamp(time());
         date_add($applicationDeadline, date_interval_create_from_date_string($timeForApplication . 'days'));
         $update = array('expirationDate' => $applicationDeadline->format('Y-m-d'));
-        $db->update_query('applicants', $update, 'uid = ' . $uid);
+        $db->update_query('applicants', $update, 'uid = ' . $db->escape_string($uid));
     }
 
     if ($_POST['applicationControl'] == 'yes') {
         $update = array('corrector' => NULL);
-        $db->update_query('applicants', $update, 'uid = ' . $uid);
+        $db->update_query('applicants', $update, 'uid = ' . $db->escape_string($uid));
     }
 
     redirect('applicants.php', $lang->applicants_submitpage_success);
@@ -150,7 +151,7 @@ function correction($uid)
     global $db, $pmAlert, $mybb, $playerFid;
     $corrector = $mybb->user['fid' . $playerFid];
     $update = array('corrector' => $corrector);
-    $db->update_query('applicants', $update, 'uid = ' . $uid);
+    $db->update_query('applicants', $update, 'uid = ' . $db->escape_string($uid));
 
     //Pn verschicken
     if ($pmAlert) {

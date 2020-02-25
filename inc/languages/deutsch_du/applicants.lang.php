@@ -3,9 +3,13 @@
 //Bestätigen Seite
 $l['applicants_submitpage_title'] = 'Bewerber zurücksetzen';
 $l['applicants_submitpage_submit'] = 'Bestätigen';
-$l['applicants_submitpage_text'] = 'Welche Einstellungen sollen für den User {1} zurückgesetzt werden?';
+$l['applicants_submitpage_text'] = 'Welche Einstellungen sollen für den Bewerber "{1}" zurückgesetzt werden?';
 $l['applicants_submitpage_success'] = 'Die Einstellungen wurde übernommen. Du wirst weitergeleitet';
 $l['applicants_submitpage_fail'] = 'Du hast auf diese Seite keinen Zugriff.';
+$l['applicants_submitpage_yes'] = 'Ja';
+$l['applicants_submitpage_no'] = 'Nein';
+$l['applicants_submitpage_extension'] = 'Bewerberfrist zurücksetzen? (startet an dem heutigen Tag neu)';
+$l['applicants_submitpage_control'] = 'Kontrolle zurücksetzen?';
 
 //Übersichtsseite
 $l['applicants_page_title'] = 'Bewerberfristen';

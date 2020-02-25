@@ -227,50 +227,54 @@ function applicants_install()
     );
     $db->insert_query("templates", $insert_array);
 
-//Template applicantsReversePage bauen
-$insert_array = array(
-    'title'        => 'applicantsReversePage',
-    'template'    => $db->escape_string('<html>
-    <head>
-    <title>{$mybb->settings[\'bbname\']} - {$lang->applicants_submitpage_title}</title>
-    {$headerinclude}
-    </head>
-    <body>
-    {$header}
-    <form action="applicants.php" method="post">
-    <table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
-    <tr>
-    <td class="thead" colspan="2"><strong>{$lang->applicants_submitpage_title}</strong></td>
-    </tr>
+    //Template applicantsReversePage bauen
+    $insert_array = array(
+        'title'        => 'applicantsReversePage',
+        'template'    => $db->escape_string('<html>
+        <head>
+        <title>{$mybb->settings[\'bbname\']} - {$lang->applicants_submitpage_title}</title>
+        {$headerinclude}
+        </head>
+        <body>
+        {$header}
+        <form action="applicants.php" method="post">
+        <table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
         <tr>
-            <td>
-                <center>Bewerberfrist zurücksetzen? (startet an dem heutigen Tag neu)<br>
-                <input type="radio" id="start_yes" name="applicationStart" value="yes">
-      <label for="start_yes">Ja</label><br>
-                    <input type="radio" id="start_no" name="applicationStart" value="no" checked>
-      <label for="start_no">Nein</label><br></center>
-                
-                <center>Kontrolle zurücksetzen?<br>
-                <input type="radio" id="control_yes" name="applicationControl" value="yes">
-      <label for="control_yes">Ja</label><br>
-                    <input type="radio" id="control_no" name="applicationControl" value="no" checked>
-      <label for="control_no">Nein</label><br></center>
-            </td>
+        <td class="thead" colspan="2"><strong>{$lang->applicants_submitpage_title}</strong></td>
         </tr>
-    </table>
-    <br />
-    <div align="center"><input type="submit" class="button" name="submit" value="{$lang->applicants_submitpage_submit}" /></div>
-    <input type="hidden" name="action" value="reverse" />
-    <input type="hidden" name="aid" value="{$aid}" />
-    </form>
-    {$footer}
-    </body>
-    </html>'),
-    'sid'        => '-1',
-    'version'    => '',
-    'dateline'    => TIME_NOW
-);
-$db->insert_query("templates", $insert_array);
+            <tr>
+                <td colspan="2" class="tcat"><center>{$infoText}</center></td>
+            </tr>
+            <tr>
+                <td width="50%">
+                    <center>{$lang->applicants_submitpage_extension}<br>
+                    <input type="radio" id="start_yes" name="applicationStart" value="yes">
+          <label for="start_yes">{$lang->applicants_submitpage_yes}</label><br>
+                        <input type="radio" id="start_no" name="applicationStart" value="no" checked>
+          <label for="start_no">{$lang->applicants_submitpage_no}</label><br></center>
+                    </td>
+                <td width="50%">
+                    <center>{$lang->applicants_submitpage_control}<br>
+                    <input type="radio" id="control_yes" name="applicationControl" value="yes">
+          <label for="control_yes">{$lang->applicants_submitpage_yes}</label><br>
+                        <input type="radio" id="control_no" name="applicationControl" value="no" checked>
+          <label for="control_no">{$lang->applicants_submitpage_no}</label><br></center>
+                </td>
+            </tr>
+        </table>
+        <br />
+        <div align="center"><input type="submit" class="button" name="submit" value="{$lang->applicants_submitpage_submit}" /></div>
+        <input type="hidden" name="action" value="reverse" />
+        <input type="hidden" name="aid" value="{$aid}" />
+        </form>
+        {$footer}
+        </body>
+        </html>'),
+        'sid'        => '-1',
+        'version'    => '',
+        'dateline'    => TIME_NOW
+    );
+    $db->insert_query("templates", $insert_array);
 
     rebuild_settings();
 }
