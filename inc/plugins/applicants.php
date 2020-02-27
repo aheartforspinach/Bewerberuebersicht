@@ -217,16 +217,6 @@ function applicants_install()
     );
     $db->insert_query("templates", $insert_array);
 
-    //Template applicantHeaderTeam bauen
-    $insert_array = array(
-        'title'        => 'applicantsHeaderTeam',
-        'template'    => $db->escape_string('<div class="red_alert">{$bannerText}</div>'),
-        'sid'        => '-1',
-        'version'    => '',
-        'dateline'    => TIME_NOW
-    );
-    $db->insert_query("templates", $insert_array);
-
     //Template applicantsReversePage bauen
     $insert_array = array(
         'title'        => 'applicantsReversePage',
@@ -410,7 +400,7 @@ function applicants_alert()
             return;
         }
 
-        eval("\$header_applicants .= \"" . $templates->get("applicantsHeaderTeam") . "\";");
+        eval("\$header_applicants .= \"" . $templates->get("applicantsHeader") . "\";");
     }
 }
 
