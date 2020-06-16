@@ -10,7 +10,7 @@ function applicants_info()
         "name"            => "Bewerberübersicht",
         "description"    => "Gibt automatisch an wie lange ein Bewerber noch Zeit für den Steckbrief hat",
         "author"        => "aheartforspinach",
-        "authorsite"    => "https://storming-gates.de/member.php?action=profile&uid=176",
+        "authorsite"    => "https://github.com/aheartforspinach",
         "version"        => "1.0",
         "compatibility" => "18*"
     );
@@ -46,35 +46,35 @@ function applicants_install()
         'applicants_time' => array(
             'title' => 'Zeit für die Bewerbung',
             'description' => 'Wie lange haben Bewerber Zeit die Bewerbung fertig zu schreiben? WICHTIG: in Tagen angeben',
-            'optionscode' => 'text',
+            'optionscode' => 'numeric',
             'value' => '0', // Default
             'disporder' => 1
         ),
         'applicants_extendTimes' => array(
             'title' => 'Verlängerungszeitraum',
             'description' => 'Um wie viele Tage kann der User seine Frist verlängern? WICHTIG: in Tagen angeben',
-            'optionscode' => 'text',
+            'optionscode' => 'numeric',
             'value' => '14', // Default
             'disporder' => 2
         ),
         'applicants_extend' => array(
             'title' => 'Verlängerung',
             'description' => 'Wie oft dürfen User ihre Frist verlängern?',
-            'optionscode' => 'text',
+            'optionscode' => 'numeric',
             'value' => '1', // Default
             'disporder' => 3
         ),
         'applicants_alert' => array(
             'title' => 'Benachrichtigung',
             'description' => 'Wie viele Tage vor Ablauf sollen Bewerber eine Benachrichtigung bekommen? (Ab diesem Zeitpunkt darf man auch die Frist verlängern)',
-            'optionscode' => 'text',
+            'optionscode' => 'numeric',
             'value' => '5', // Default
             'disporder' => 4
         ),
         'applicants_teamaccount' => array(
             'title' => 'Teamaccount',
             'description' => 'Gib die UID vom Account an, der die Steckivorlage gepostet hat, um sein Thema unkorrigierbar zu machen. 0 falls nicht gebraucht wird.',
-            'optionscode' => 'text',
+            'optionscode' => 'numeric',
             'value' => '0', // Default
             'disporder' => 5
         ),
@@ -95,7 +95,7 @@ function applicants_install()
         'applicants_player' => array(
             'title' => 'Spielerprofilfeld',
             'description' => 'Gib die FID vom Profilfeld an, wo User ihren Spielernamen angeben.',
-            'optionscode' => 'text',
+            'optionscode' => 'numeric',
             'value' => '0', // Default
             'disporder' => 8
         ),
@@ -217,6 +217,26 @@ function applicants_install()
     );
     $db->insert_query("templates", $insert_array);
 
+    //Template applicantsButton bauen
+    $insert_array = array(
+        'title'        => 'applicantsButton',
+        'template'    => $db->escape_string('<a href="applicants.php?applicantId={$applicantUid}"><i class="fas fa-check" title="Steckbrief übernehmen?"></i></a>'),
+        'sid'        => '-1',
+        'version'    => '',
+        'dateline'    => TIME_NOW
+    );
+    $db->insert_query("templates", $insert_array);
+
+    //Template applicantsButtonThread bauen
+    $insert_array = array(
+        'title'        => 'applicantsButtonThread',
+        'template'    => $db->escape_string('<a href="applicants.php?applicantId={$applicantUid}"><i class="fas fa-check" title="Steckbrief übernehmen?"></i></a>'),
+        'sid'        => '-1',
+        'version'    => '',
+        'dateline'    => TIME_NOW
+    );
+    $db->insert_query("templates", $insert_array);
+
     //Template applicantsReversePage bauen
     $insert_array = array(
         'title'        => 'applicantsReversePage',
@@ -283,7 +303,7 @@ function applicants_uninstall()
     global $db;
     $db->delete_query('settings', "name IN('applicants_time', 'applicants_fid', 'applicants_alert', 'applicants_teamaccount', 'applicants_extend','applicants_gid', 'applicants_player', 'applicants_pmAlert', 'applicants_pmText')");
     $db->delete_query('settinggroups', "name = 'applicants'");
-    $db->delete_query("templates", "title IN('applicants', 'applicantsUser', 'applicantsHeader', 'applicantsHeaderTeam', 'applicantsReversePage')");
+    $db->delete_query("templates", "title IN('applicants', 'applicantsUser', 'applicantsHeader', 'applicantsHeaderTeam', 'applicantsReversePage', 'applicantsButton', 'applicantsButtonThread')");
     if ($db->table_exists("applicants")) {
         $db->drop_table("applicants");
     }
@@ -303,6 +323,7 @@ function applicants_activate()
         $date = new DateTime($date[\'expirationDate\']);
            echo \'<tr><td colspan="2" class="tcat">Deine Bewerbungsfrist endet am \'. $date->format(\'d.m.Y\') .\'</td></tr>\';	
     } ?> {$checklist_check}');
+    find_replace_templatesets("showthread", "#" . preg_quote('{$newreply}') . "#i", '{$correctionButton} {$newreply}');
 }
 
 function applicants_deactivate()
@@ -317,28 +338,45 @@ function applicants_deactivate()
 			while($date = $db->fetch_array($query)){
 				$date = new DateTime($date[\'expirationDate\']);
    				echo \'<tr><td colspan="2" class="tcat">Deine Bewerbungsfrist endet am \'. $date->format(\'d.m.Y\') .\'</td></tr>\';	
-			} ?>') . "#i", '', 0);
+            } ?>') . "#i", '', 0);
+    find_replace_templatesets("showthread", "#" . preg_quote('{$correctionButton}') . "#i", '', 0);
 }
 
 $plugins->add_hook('forumdisplay_thread', 'applicants_forumdisplay_thread');
 function applicants_forumdisplay_thread()
 {
-    global $thread, $mybb, $correctionButton, $db, $corrector;
+    global $thread, $correctionButton, $corrector;
+    $array = setCorrectionButton($thread['uid'], 'applicantsButton');
+    $correctionButton = $array['correctionButton'];
+    $corrector = $array['corrector'];
+}
+
+$plugins->add_hook('showthread_start', 'applicants_showthread_start');
+function applicants_showthread_start()
+{
+    global $correctionButton, $thread;
+    $array = setCorrectionButton($thread['uid'], 'applicantsButtonThread');
+    $correctionButton = $array['correctionButton'];
+}
+
+function setCorrectionButton($applicantUid, $templateName)
+{
+    global $mybb, $db, $templates, $thread;
     $applicationFid = intval($mybb->settings['applicants_fid']);
     $teamaccount = intval($mybb->settings['applicants_teamaccount']);
-    $correctionButton = '';
-    $corrector = '';
-    $applicantUid = $thread['uid'];
+    $returnArray = array('correctionButton' => '', 'corrector' => '');
     //einfügen vom Button zur Korrekturübernahme
-    if ($mybb->input['fid'] == $applicationFid) { //nur wenn Bewerbungsbereich ausführen
+    if ($thread['fid'] == $applicationFid) { //nur wenn Bewerbungsbereich ausführen
+        var_dump('hallo');
         $correctors = $db->fetch_array($db->simple_select("applicants", "corrector", "uid = '$applicantUid'"));
         if ($correctors['corrector'] != null) {
-            $corrector = '<div><b>Korrigiert: </b>' . $correctors['corrector'] . '</div>';
+            $returnArray['corrector'] = '<div><b>Korrigiert: </b>' . $correctors['corrector'] . '</div>';
         }
-        if ($mybb->usergroup['canmodcp'] == 1 && $thread['uid'] != $teamaccount && $corrector == '') {
-            $correctionButton = ' <a href="applicants.php?applicantId=' . $applicantUid . '"><i class="fas fa-check" title="Steckbrief übernehmen?"></i></a>';
+        if ($mybb->usergroup['canmodcp'] == 1 && $applicantUid != $teamaccount && $returnArray['corrector'] == '') {
+            $returnArray['correctionButton'] = eval($templates->render($templateName));
         }
     }
+    return $returnArray;
 }
 
 //Benachrichtung bei auslaufender Frist
