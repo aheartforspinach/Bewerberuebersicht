@@ -29,10 +29,10 @@ __Veränderte Templates:__
 
 ## Vorschaubilder
 __Einstellungen des Bewerberübersicht-Plugin__
-![Bewerberübersicht Einstellungen](https://beforestorm.de/imageUpload/plugins/applicants_settings.png)
+![Bewerberübersicht Einstellungen](https://aheartforspinach.de/upload/plugins/applicants_settings.png)
 
 __Bewerberübersichtseite__
-![Bewerberübersichtseite](https://beforestorm.de/imageUpload/plugins/applicants_overview.png)
+![Bewerberübersichtseite](https://aheartforspinach.de/upload/plugins/applicants_overview.png)
 
 __Ansicht des Bewerberbereichs__
-![Ansicht des Bewerberbereichs](https://beforestorm.de/imageUpload/plugins/applicants_thread.png)
+![Ansicht des Bewerberbereichs](https://aheartforspinach.de/upload/plugins/applicants_thread.png)
