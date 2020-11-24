@@ -122,6 +122,14 @@ function applicants_install()
         $db->insert_query('settings', $setting);
     }
 
+    // create templates
+    $templategroup = array(
+        "prefix" => "applicants",
+        "title" => $db->escape_string("Bewerberübersicht"),
+    );
+
+    $db->insert_query("templategroups", $templategroup);
+
     //Template applicant bauen
     $insert_array = array(
         'title'        => 'applicants',
@@ -181,7 +189,7 @@ function applicants_install()
     }
 });
 </script>'),
-        'sid'        => '-1',
+        'sid'        => '-2',
         'version'    => '',
         'dateline'    => TIME_NOW
     );
@@ -189,7 +197,7 @@ function applicants_install()
 
     //Template applicantUser bauen
     $insert_array = array(
-        'title'        => 'applicantsUser',
+        'title'        => 'applicants_User',
         'template'    => $db->escape_string('<tr style="text-align:center;">
         <td>
             {$username} &nbsp; {$buttonExtend}
@@ -201,7 +209,7 @@ function applicants_install()
             {$corrector} {$correctionButton} {$reverseButton}
         </td>
     </tr>'),
-        'sid'        => '-1',
+        'sid'        => '-2',
         'version'    => '',
         'dateline'    => TIME_NOW
     );
@@ -209,9 +217,9 @@ function applicants_install()
 
     //Template applicantHeader bauen
     $insert_array = array(
-        'title'        => 'applicantsHeader',
+        'title'        => 'applicants_Header',
         'template'    => $db->escape_string('<div class="red_alert">{$bannerText}</div>'),
-        'sid'        => '-1',
+        'sid'        => '-2',
         'version'    => '',
         'dateline'    => TIME_NOW
     );
@@ -219,9 +227,9 @@ function applicants_install()
 
     //Template applicantsButton bauen
     $insert_array = array(
-        'title'        => 'applicantsButton',
+        'title'        => 'applicants_Button',
         'template'    => $db->escape_string('<a href="applicants.php?applicantId={$applicantUid}"><i class="fas fa-check" title="Steckbrief übernehmen?"></i></a>'),
-        'sid'        => '-1',
+        'sid'        => '-2',
         'version'    => '',
         'dateline'    => TIME_NOW
     );
@@ -229,9 +237,9 @@ function applicants_install()
 
     //Template applicantsButtonThread bauen
     $insert_array = array(
-        'title'        => 'applicantsButtonThread',
+        'title'        => 'applicants_ButtonThread',
         'template'    => $db->escape_string('<a href="applicants.php?applicantId={$applicantUid}"><i class="fas fa-check" title="Steckbrief übernehmen?"></i></a>'),
-        'sid'        => '-1',
+        'sid'        => '-2',
         'version'    => '',
         'dateline'    => TIME_NOW
     );
@@ -239,7 +247,7 @@ function applicants_install()
 
     //Template applicantsReversePage bauen
     $insert_array = array(
-        'title'        => 'applicantsReversePage',
+        'title'        => 'applicants_ReversePage',
         'template'    => $db->escape_string('<html>
         <head>
         <title>{$mybb->settings[\'bbname\']} - {$lang->applicants_submitpage_title}</title>
@@ -280,7 +288,7 @@ function applicants_install()
         {$footer}
         </body>
         </html>'),
-        'sid'        => '-1',
+        'sid'        => '-2',
         'version'    => '',
         'dateline'    => TIME_NOW
     );
@@ -303,10 +311,9 @@ function applicants_uninstall()
     global $db;
     $db->delete_query('settings', "name IN('applicants_time', 'applicants_fid', 'applicants_alert', 'applicants_teamaccount', 'applicants_extend','applicants_gid', 'applicants_player', 'applicants_pmAlert', 'applicants_pmText')");
     $db->delete_query('settinggroups', "name = 'applicants'");
-    $db->delete_query("templates", "title IN('applicants', 'applicantsUser', 'applicantsHeader', 'applicantsHeaderTeam', 'applicantsReversePage', 'applicantsButton', 'applicantsButtonThread')");
-    if ($db->table_exists("applicants")) {
-        $db->drop_table("applicants");
-    }
+    $db->delete_query("templategroups", 'prefix = "applicants"');
+    $db->delete_query("templates", "title like 'applicants_%' or title = 'applicants'");
+    if ($db->table_exists("applicants")) $db->drop_table("applicants");
     rebuild_settings();
 }
 
@@ -346,7 +353,7 @@ $plugins->add_hook('forumdisplay_thread', 'applicants_forumdisplay_thread');
 function applicants_forumdisplay_thread()
 {
     global $thread, $correctionButton, $corrector;
-    $array = setCorrectionButton($thread['uid'], 'applicantsButton');
+    $array = setCorrectionButton($thread['uid'], 'applicants_Button');
     $correctionButton = $array['correctionButton'];
     $corrector = $array['corrector'];
 }
@@ -355,7 +362,7 @@ $plugins->add_hook('showthread_start', 'applicants_showthread_start');
 function applicants_showthread_start()
 {
     global $correctionButton, $thread;
-    $array = setCorrectionButton($thread['uid'], 'applicantsButtonThread');
+    $array = setCorrectionButton($thread['uid'], 'applicants_ButtonThread');
     $correctionButton = $array['correctionButton'];
 }
 
@@ -367,7 +374,6 @@ function setCorrectionButton($applicantUid, $templateName)
     $returnArray = array('correctionButton' => '', 'corrector' => '');
     //einfügen vom Button zur Korrekturübernahme
     if ($thread['fid'] == $applicationFid) { //nur wenn Bewerbungsbereich ausführen
-        var_dump('hallo');
         $correctors = $db->fetch_array($db->simple_select("applicants", "corrector", "uid = '$applicantUid'"));
         if ($correctors['corrector'] != null) {
             $returnArray['corrector'] = '<div><b>Korrigiert: </b>' . $correctors['corrector'] . '</div>';
@@ -424,7 +430,7 @@ function applicants_alert()
             continue;
         }
 
-        eval("\$header_applicants .= \"" . $templates->get("applicantsHeader") . "\";");
+        eval("\$header_applicants .= \"" . $templates->get("applicants_Header") . "\";");
     }
 
     //nur für Teammitglieder: abgelaufene Bewerbungen
@@ -438,7 +444,7 @@ function applicants_alert()
             return;
         }
 
-        eval("\$header_applicants .= \"" . $templates->get("applicantsHeader") . "\";");
+        eval("\$header_applicants .= \"" . $templates->get("applicants_Header") . "\";");
     }
 }
 

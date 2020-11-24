@@ -34,7 +34,7 @@ if ($mybb->input['action'] == 'reverseSite') {
     $aid = $mybb->input['uid'];
     $infoText =$lang->sprintf($lang->applicants_submitpage_text, get_user($aid)['username']);
 
-    eval("\$page = \"" . $templates->get("applicantsReversePage") . "\";");
+    eval("\$page = \"" . $templates->get("applicants_ReversePage") . "\";");
     output_page($page);
     return;
 }
@@ -142,7 +142,7 @@ while ($applicant = $db->fetch_array($allApplicants)) {
         }
     }
 
-    eval("\$applicants .= \"" . $templates->get("applicantsUser") . "\";");
+    eval("\$applicants .= \"" . $templates->get("applicants_User") . "\";");
 }
 
 //Steckbriefübernahme
