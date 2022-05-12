@@ -7,8 +7,10 @@ $l['applicants_submitpage_text'] = 'Welche Einstellungen sollen für den Bewerbe
 $l['applicants_submitpage_success'] = 'Die Einstellungen wurde übernommen. Du wirst weitergeleitet';
 $l['applicants_submitpage_fail'] = 'Du hast auf diese Seite keinen Zugriff.';
 $l['applicants_submitpage_yes'] = 'Ja';
+$l['applicants_submitpage_yes_start'] = 'Ja, heute + Zeit für Bewerbung';
+$l['applicants_submitpage_yes_extend'] = 'Ja, heute + Zeit für eine Verlängerung';
 $l['applicants_submitpage_no'] = 'Nein';
-$l['applicants_submitpage_extension'] = 'Bewerberfrist zurücksetzen? (startet an dem heutigen Tag neu)';
+$l['applicants_submitpage_extension'] = 'Bewerberfrist zurücksetzen?';
 $l['applicants_submitpage_control'] = 'Kontrolle zurücksetzen?';
 
 //Übersichtsseite

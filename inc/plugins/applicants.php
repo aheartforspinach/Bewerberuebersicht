@@ -11,16 +11,14 @@ function applicants_info()
         "description"    => "Gibt automatisch an wie lange ein Bewerber noch Zeit für den Steckbrief hat",
         "author"        => "aheartforspinach",
         "authorsite"    => "https://github.com/aheartforspinach",
-        "version"        => "1.0",
+        "version"        => "1.1",
         "compatibility" => "18*"
     );
 }
 
-
-
 function applicants_install()
 {
-    global $db, $cache, $mybb;
+    global $db, $cache, $mybb; 
 
     if ($db->engine == 'mysql' || $db->engine == 'mysqli') {
         $db->query("CREATE TABLE `" . TABLE_PREFIX . "applicants` (
@@ -121,6 +119,7 @@ function applicants_install()
 
         $db->insert_query('settings', $setting);
     }
+
 
     // create templates
     $templategroup = array(
@@ -312,14 +311,14 @@ function applicants_uninstall()
     $db->delete_query('settings', "name IN('applicants_time', 'applicants_fid', 'applicants_alert', 'applicants_teamaccount', 'applicants_extend','applicants_gid', 'applicants_player', 'applicants_pmAlert', 'applicants_pmText')");
     $db->delete_query('settinggroups', "name = 'applicants'");
     $db->delete_query("templategroups", 'prefix = "applicants"');
-    $db->delete_query("templates", "title like 'applicants_%' or title = 'applicants'");
+    $db->delete_query("templates", "title like 'applicants%'");
     if ($db->table_exists("applicants")) $db->drop_table("applicants");
     rebuild_settings();
 }
 
 function applicants_activate()
 {
-    global $db, $mybb;
+    global $db, $cache;
     include MYBB_ROOT . "/inc/adminfunctions_templates.php";
     find_replace_templatesets("header", "#" . preg_quote('{$awaitingusers}') . "#i", '{$awaitingusers} {$header_applicants}');
     find_replace_templatesets("forumdisplay_thread", "#" . preg_quote('{$thread[\'multipage\']}') . "#i", '{$thread[\'multipage\']} {$correctionButton}');
@@ -331,6 +330,17 @@ function applicants_activate()
            echo \'<tr><td colspan="2" class="tcat">Deine Bewerbungsfrist endet am \'. $date->format(\'d.m.Y\') .\'</td></tr>\';	
     } ?> {$checklist_check}');
     find_replace_templatesets("showthread", "#" . preg_quote('{$newreply}') . "#i", '{$correctionButton} {$newreply}');
+
+    if (function_exists('myalerts_is_activated') && myalerts_is_activated()) {
+		$alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::createInstance($db, $cache);
+
+		$alertType = new MybbStuff_MyAlerts_Entity_AlertType();
+		$alertType->setCanBeUserDisabled(false);
+		$alertType->setCode("applicants");
+		$alertType->setEnabled(true);
+
+		$alertTypeManager->add($alertType);
+	}
 }
 
 function applicants_deactivate()
@@ -347,6 +357,12 @@ function applicants_deactivate()
    				echo \'<tr><td colspan="2" class="tcat">Deine Bewerbungsfrist endet am \'. $date->format(\'d.m.Y\') .\'</td></tr>\';	
             } ?>') . "#i", '', 0);
     find_replace_templatesets("showthread", "#" . preg_quote('{$correctionButton}') . "#i", '', 0);
+
+    if (function_exists('myalerts_is_activated') && myalerts_is_activated()) {
+		$alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::getInstance();
+
+		$alertTypeManager->deleteByCode('applicants');
+	}
 }
 
 $plugins->add_hook('forumdisplay_thread', 'applicants_forumdisplay_thread');
@@ -500,4 +516,39 @@ function updateDatabase()
             $db->insert_query('applicants', $insertApplicant);
         }
     }
+}
+
+$plugins->add_hook("global_start", "applicants_myalerts");
+function applicants_myalerts()
+{
+	global $mybb, $lang;
+
+	if (!$mybb->user['uid']) return;
+
+	if (function_exists('myalerts_is_activated') && myalerts_is_activated()) {
+		class Applicants_AlertFormatter extends MybbStuff_MyAlerts_Formatter_AbstractFormatter
+		{
+
+			public function init()
+			{
+				
+			}
+
+			public function formatAlert(MybbStuff_MyAlerts_Entity_Alert $alert, array $outputAlert)
+			{
+                return sprintf(
+                    'Ich hab die Korrektur deiner Bewerbung übernommen :)',
+                    $outputAlert['dateline']
+                );
+			}
+
+			public function buildShowLink(MybbStuff_MyAlerts_Entity_Alert $alert)
+			{
+				return get_profile_link($alert->getFromUserId());
+			}
+		}
+
+		$formatterManager = MybbStuff_MyAlerts_AlertFormatterManager::getInstance();
+		$formatterManager->registerFormatter(new Applicants_AlertFormatter($mybb, $lang, 'applicants'));
+	}
 }

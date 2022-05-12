@@ -49,11 +49,12 @@ if (isset($_GET["applicantId"]) && $mybb->usergroup['canmodcp'] == 1) {
 
 //Zurücksetzen
 if ($_POST['action']  ==  'reverse') {
-    $uid = $_POST['aid'];
-    if ($_POST['applicationStart'] == 'yes') {
+    $uid = $db->escape_string($_POST['aid']);
+    if ($_POST['applicationStart'] == 'yes' || $_POST['applicationStart'] == 'yes_extend') {
         $applicationDeadline = new DateTime();
         $applicationDeadline->setTimestamp(time());
-        date_add($applicationDeadline, date_interval_create_from_date_string($timeForApplication . 'days'));
+        $extendTime = $_POST['applicationStart'] == 'yes' ? $timeForApplication : $timeframeExtension;
+        date_add($applicationDeadline, date_interval_create_from_date_string($extendTime . 'days'));
         $update = array('expirationDate' => $applicationDeadline->format('Y-m-d'));
         $db->update_query('applicants', $update, 'uid = ' . $db->escape_string($uid));
     }
@@ -68,7 +69,7 @@ if ($_POST['action']  ==  'reverse') {
 
 //Frist verlängern
 if ($_POST["action"] == "extend") {
-    $uid = $_POST["id"];
+    $uid = $db->escape_string($_POST["id"]);
     $db->query("UPDATE " . TABLE_PREFIX . "applicants SET expirationDate = DATE_ADD(expirationDate, INTERVAL +$timeframeExtension day),extensionCtr = extensionCtr + 1  WHERE uid = $uid");
 }
 
@@ -91,7 +92,11 @@ while ($applicant = $db->fetch_array($allApplicants)) {
     $correctionButton = '';
     $correction = '';
 
-    $applicationThread = $db->fetch_array($db->simple_select('threads', 'subject', 'uid = ' . $applicant['uid'] . ' AND fid = ' . $applicationFid . ' AND visible = 1'))['subject'];     //Korrektornamen bauen
+    $applicationThread = $db->fetch_array($db->simple_select(
+        'threads', 
+        'subject', 
+        'uid = ' . $applicant['uid'] . ' AND fid = ' . $applicationFid . ' AND visible = 1')
+    )['subject'];     //Korrektornamen bauen
     if ($applicant['corrector'] != NULL) {
         $corrector = "Es korrigiert <b>" . $applicant['corrector'] . "</b>";
     } else {
@@ -152,6 +157,20 @@ function correction($uid)
     $corrector = $mybb->user['fid' . $playerFid];
     $update = array('corrector' => $corrector);
     $db->update_query('applicants', $update, 'uid = ' . $db->escape_string($uid));
+
+    // alert stuff
+    if (function_exists('myalerts_is_activated') && myalerts_is_activated()) {
+        $alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::getInstance();
+        $alertType = $alertTypeManager->getByCode('applicants');
+        $alertTypeId = $alertType->getId();
+        $fromUser = $mybb->user['uid'];
+        $toUser = $db->escape_string($uid);
+        $alertManager = MybbStuff_MyAlerts_AlertManager::getInstance();
+
+        $alert = new MybbStuff_MyAlerts_Entity_Alert($toUser, $alertType, $db->escape_string($uid));
+        $alert->setFromUserId($fromUser);
+        $alertManager->addAlert($alert);
+    }
 
     //Pn verschicken
     if ($pmAlert) {
