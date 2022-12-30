@@ -5,7 +5,7 @@ require_once "global.php";
 add_breadcrumb("Bewerberfristen", "applicants.php");
 global $db, $templates, $mybb, $lang;
 $email = $mybb->user['email'];
-$today = new DateTime(date("Y-m-d", time())); //heute
+$today = new DateTime(date("Y-m-d", time()));
 
 if (!$db->table_exists("applicants")) {
     die("Die Bewerberliste ist zur Zeit nicht installiert.");
@@ -26,13 +26,13 @@ if (intval($mybb->settings['applicants_pmAlert']) == 1) {
     $pmAlert = false;
 }
 
-//------------- Bestätigungsseite ---------------------------
-if ($mybb->input['action'] == 'reverseSite') {
+//------------- submit page ---------------------------
+if ($mybb->get_input('action', MyBB::INPUT_STRING) === 'reverseSite') {
     if (!$mybb->usergroup['canmodcp'] == 1) {
         redirect('applicants.php', $lang->applicants_submitpage_fail);
     }
     $aid = $mybb->input['uid'];
-    $infoText =$lang->sprintf($lang->applicants_submitpage_text, get_user($aid)['username']);
+    $infoText = $lang->sprintf($lang->applicants_submitpage_text, get_user($aid)['username']);
 
     eval("\$page = \"" . $templates->get("applicants_ReversePage") . "\";");
     output_page($page);
@@ -40,26 +40,25 @@ if ($mybb->input['action'] == 'reverseSite') {
 }
 
 
-//-------------------- normale Seite ------------------
-//Korrektur vom Thread annehmen
-if (isset($_GET["applicantId"]) && $mybb->usergroup['canmodcp'] == 1) {
-    $applicantUid = $_GET["applicantId"];
-    correction($applicantUid);
+//-------------------- get correction from thread ------------------
+if ($mybb->get_input('applicantId', MyBB::INPUT_INT) !== 0 && $mybb->usergroup['canmodcp'] == 1) {
+    correction($mybb->get_input('applicantId', MyBB::INPUT_INT));
 }
 
-//Zurücksetzen
-if ($_POST['action']  ==  'reverse') {
-    $uid = $db->escape_string($_POST['aid']);
-    if ($_POST['applicationStart'] == 'yes' || $_POST['applicationStart'] == 'yes_extend') {
+//-------------------- reset page ------------------
+if ($mybb->get_input('action', MyBB::INPUT_STRING) === 'reverse') {
+    $uid = $mybb->get_input('aid', MyBB::INPUT_INT);
+
+    if ($mybb->get_input('applicationStart', MyBB::INPUT_STRING) === 'yes' || $mybb->get_input('applicationStart', MyBB::INPUT_STRING) == 'yes_extend') {
         $applicationDeadline = new DateTime();
         $applicationDeadline->setTimestamp(time());
-        $extendTime = $_POST['applicationStart'] == 'yes' ? $timeForApplication : $timeframeExtension;
+        $extendTime = $mybb->get_input('applicationStart', MyBB::INPUT_STRING) === 'yes' ? $timeForApplication : $timeframeExtension;
         date_add($applicationDeadline, date_interval_create_from_date_string($extendTime . 'days'));
         $update = array('expirationDate' => $applicationDeadline->format('Y-m-d'));
         $db->update_query('applicants', $update, 'uid = ' . $db->escape_string($uid));
     }
 
-    if ($_POST['applicationControl'] == 'yes') {
+    if ($mybb->get_input('applicationControl', MyBB::INPUT_STRING) === 'yes') {
         $update = array('corrector' => NULL);
         $db->update_query('applicants', $update, 'uid = ' . $db->escape_string($uid));
     }
@@ -67,19 +66,19 @@ if ($_POST['action']  ==  'reverse') {
     redirect('applicants.php', $lang->applicants_submitpage_success);
 }
 
-//Frist verlängern
-if ($_POST["action"] == "extend") {
-    $uid = $db->escape_string($_POST["id"]);
+//-------------------- expand expiration ------------------
+if ($mybb->get_input('action', MyBB::INPUT_STRING) === "extend") {
+    $uid = $mybb->get_input('id', MyBB::INPUT_INT);
     $db->query("UPDATE " . TABLE_PREFIX . "applicants SET expirationDate = DATE_ADD(expirationDate, INTERVAL +$timeframeExtension day),extensionCtr = extensionCtr + 1  WHERE uid = $uid");
 }
 
-//Steckbrief übernehmen
-if ($_POST["action"] == "correction") {
-    $uid = $_POST["id"];
-    correction($uid);
+//-------------------- start correction ------------------
+if ($mybb->get_input('action', MyBB::INPUT_STRING) === "correction") {
+    correction($mybb->get_input('id', MyBB::INPUT_INT));
 }
 
-//alle Bewerber
+//-------------------- normal page ------------------
+$applicants = '';
 $allApplicants = $db->simple_select('applicants', '*', '', array("order_by" => 'expirationDate',));
 
 while ($applicant = $db->fetch_array($allApplicants)) {
@@ -92,58 +91,58 @@ while ($applicant = $db->fetch_array($allApplicants)) {
     $correctionButton = '';
     $correction = '';
 
-    $applicationThread = $db->fetch_array($db->simple_select(
-        'threads', 
-        'subject', 
-        'uid = ' . $applicant['uid'] . ' AND fid = ' . $applicationFid . ' AND visible = 1')
-    )['subject'];     //Korrektornamen bauen
-    if ($applicant['corrector'] != NULL) {
-        $corrector = "Es korrigiert <b>" . $applicant['corrector'] . "</b>";
+    if ($applicant['corrector'] !== null) {
+        $corrector = $lang->sprintf($lang->applicants_submitpage_corrector, $applicant['corrector']);
     } else {
-        if ($mybb->usergroup['canmodcp'] == 1 && $applicationThread != '') {
-            $corrector = "";
-            $correctionButton = '<i class="fas fa-check correction" title="Steckbrief übernehmen?" id="' .  $applicant['uid']  . '"></i>';
-        } else {
-            $corrector = "-";
-            $correctionButton = "";
-        }
-    }
-    if ($mybb->usergroup['canmodcp'] == 1) {
-        $reverseButton = ' <a href="/applicants.php?action=reverseSite&uid=' .  $applicant['uid']  . '"><i class="fas fa-redo" title="Zurücksetzen?"></i></a>';
+        $applicationSubject = $db->fetch_field($db->simple_select(
+            'threads', 
+            'subject', 
+            'uid = ' . $applicant['uid'] . ' AND fid = ' . $applicationFid . ' AND visible = 1'),
+        'subject');
+
+        $isApplicationThere = $mybb->usergroup['canmodcp'] == 1 && $applicationSubject != '';
+        $corrector = $isApplicationThere ? '' : '-';
+        $correctionButton = $isApplicationThere ? $lang->sprintf($lang->applicants_submitpage_correct_application, $applicant['uid']) : '';
     }
 
-    //Tage für Stecki
+    if ($mybb->usergroup['canmodcp'] == 1) {
+        $reverseButton = $lang->sprintf($lang->applicants_submitpage_revert, $applicant['uid']);
+    }
+
+    // expiration
     $expiration = new DateTime($applicant['expirationDate']);
     $interval = $expiration->diff($today);
     $deadline = $expiration->format('d.m.Y');
     $deadlineDays = $interval->d;
     $isExpired = false;
+
     if ($expiration->format('Y-m-d') < $today->format('Y-m-d')) {
         $isExpired = true;
     }
 
-    if ($applicant['corrector'] != null) {
-        $deadlineText = "unter Korrektur";
+    if ($applicant['corrector'] !== null) {
+        $deadlineText = $lang->applicants_submitpage_correction;
         $correctionDate = new DateTime($applicant['correctionDate']);
-        $correction = 'seit dem ' . $correctionDate->format('d.m.Y');
+        $correction = $lang->sprintf($lang->applicants_submitpage_correction_since, $correctionDate->format('d.m.Y'));
     } else if ($isExpired) {
-        $deadlineText = "abgelaufen";
+        $deadlineText = $lang->applicants_submitpage_expired;
     } else if ($deadlineDays == 1) {
-        $deadlineText = "<b>noch einen Tag</b> bis " . $deadline;
+        $deadlineText = $lang->sprintf($lang->applicants_submitpage_one_day, $deadline);
     } else {
-        $deadlineText = "<b>noch " . $deadlineDays . " Tage</b> bis " . $deadline;
+        $deadlineText = $lang->sprintf($lang->applicants_submitpage_more_days, $deadlineDays, $deadline);
     }
 
-    $buttonExtend = "";
-    //Verlängern Button
+    $buttonExtend = '';
+
+    // extend button
     if ($applicant['corrector'] == null) {
         //user
         if (!$mybb->usergroup['canmodcp'] == 1) {
             if ($email == $applicant['email'] && !$isExpired && $deadlineDays <= $alertDays && $applicant['extensionCtr'] < $timesToExtend) {
-                $buttonExtend = '<i class="fas fa-plus extend" title="Frist verlängern" id="' .  $applicant['uid']  . '"></i> ';
+                $buttonExtend = $lang->sprintf($lang->applicants_submitpage_extend, $applicant['uid']);
             }
         } else { //team
-            $buttonExtend = '<i class="fas fa-plus extend" title="Frist verlängern" id="' .  $applicant['uid']  . '"></i> ';
+            $buttonExtend = $lang->sprintf($lang->applicants_submitpage_extend, $applicant['uid']);
         }
     }
 

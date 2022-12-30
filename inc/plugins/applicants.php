@@ -7,18 +7,18 @@ if (!defined("IN_MYBB")) {
 function applicants_info()
 {
     return array(
-        "name"            => "Bewerberübersicht",
-        "description"    => "Gibt automatisch an wie lange ein Bewerber noch Zeit für den Steckbrief hat",
-        "author"        => "aheartforspinach",
-        "authorsite"    => "https://github.com/aheartforspinach",
-        "version"        => "1.1",
+        "name" => "Bewerberübersicht",
+        "description" => "Gibt automatisch an wie lange ein Bewerber noch Zeit für den Steckbrief hat",
+        "author" => "aheartforspinach",
+        "authorsite" => "https://github.com/aheartforspinach",
+        "version" => "1.2",
         "compatibility" => "18*"
     );
 }
 
 function applicants_install()
 {
-    global $db, $cache, $mybb; 
+    global $db;
 
     if ($db->engine == 'mysql' || $db->engine == 'mysqli') {
         $db->query("CREATE TABLE `" . TABLE_PREFIX . "applicants` (
@@ -31,7 +31,25 @@ function applicants_install()
         ) ENGINE=MyISAM" . $db->build_create_table_collation());
     }
 
-    //Einstellungen 
+    // tasks
+    $date = new DateTime(date("d.m.Y", strtotime('+1 hour')));
+    $date->setTime(1, 0, 0);
+    $task = array(
+        'title' => 'Applciants Reset',
+        'description' => 'Automatically resets all fields from the applicants plugin',
+        'file' => 'applicants',
+        'minute' => 0,
+        'hour' => '*',
+        'day' => '*',
+        'month' => '*',
+        'weekday' => '*',
+        'nextrun' => $date->getTimestamp(),
+        'logging' => 1,
+        'locked' => 0
+    );
+    $db->insert_query('tasks', $task);
+
+    // settings 
     $setting_group = array(
         'name' => 'applicants',
         'title' => 'Bewerberübersicht',
@@ -45,63 +63,63 @@ function applicants_install()
             'title' => 'Zeit für die Bewerbung',
             'description' => 'Wie lange haben Bewerber Zeit die Bewerbung fertig zu schreiben? WICHTIG: in Tagen angeben',
             'optionscode' => 'numeric',
-            'value' => '0', // Default
+            'value' => '0',
             'disporder' => 1
         ),
         'applicants_extendTimes' => array(
             'title' => 'Verlängerungszeitraum',
             'description' => 'Um wie viele Tage kann der User seine Frist verlängern? WICHTIG: in Tagen angeben',
             'optionscode' => 'numeric',
-            'value' => '14', // Default
+            'value' => '14',
             'disporder' => 2
         ),
         'applicants_extend' => array(
             'title' => 'Verlängerung',
             'description' => 'Wie oft dürfen User ihre Frist verlängern?',
             'optionscode' => 'numeric',
-            'value' => '1', // Default
+            'value' => '1',
             'disporder' => 3
         ),
         'applicants_alert' => array(
             'title' => 'Benachrichtigung',
             'description' => 'Wie viele Tage vor Ablauf sollen Bewerber eine Benachrichtigung bekommen? (Ab diesem Zeitpunkt darf man auch die Frist verlängern)',
             'optionscode' => 'numeric',
-            'value' => '5', // Default
+            'value' => '5',
             'disporder' => 4
         ),
         'applicants_teamaccount' => array(
             'title' => 'Teamaccount',
             'description' => 'Gib die UID vom Account an, der die Steckivorlage gepostet hat, um sein Thema unkorrigierbar zu machen. 0 falls nicht gebraucht wird.',
             'optionscode' => 'numeric',
-            'value' => '0', // Default
+            'value' => '0',
             'disporder' => 5
         ),
         'applicants_fid' => array(
             'title' => 'FID des Bewerbungsforums',
             'description' => 'Wie lautet die FID des Forums, wo User ihre fertigen Steckbriefe posten?',
             'optionscode' => 'forumselectsingle',
-            'value' => '0', // Default
+            'value' => '0',
             'disporder' => 6
         ),
         'applicants_gid' => array(
             'title' => 'Bewerbergruppe',
             'description' => 'Wie lautet die Gruppen-Id von Bewerbern?',
             'optionscode' => 'groupselectsingle',
-            'value' => '2', // Default
+            'value' => '2',
             'disporder' => 7
         ),
         'applicants_player' => array(
             'title' => 'Spielerprofilfeld',
             'description' => 'Gib die FID vom Profilfeld an, wo User ihren Spielernamen angeben.',
             'optionscode' => 'numeric',
-            'value' => '0', // Default
+            'value' => '0',
             'disporder' => 8
         ),
         'applicants_pmAlert' => array(
             'title' => 'PN-Benachrichtigung',
             'description' => 'Sollen Bewerber per PN benachrichtigt werden, wenn der Steckbrief übernommen wurde?',
             'optionscode' => 'yesno',
-            'value' => 1, // Default
+            'value' => 1,
             'disporder' => 9
         ),
         'applicants_pmText' => array(
@@ -129,7 +147,6 @@ function applicants_install()
 
     $db->insert_query("templategroups", $templategroup);
 
-    //Template applicant bauen
     $insert_array = array(
         'title'        => 'applicants',
         'template'    => $db->escape_string('<html xml:lang="de" lang="de" xmlns="http://www.w3.org/1999/xhtml">
@@ -140,26 +157,23 @@ function applicants_install()
         
         <body>
             {$header}
-            <div class="panel" id="panel">
-                <div id="panel">$menu</div>
                 <h1>{$lang->applicants_page_title}</h1>
 				<blockquote>{$lang->applicants_page_info}<br><br>
-				<table width="100%">
-					<tr>
-						<td class="thead" width="33%">
-                        {$lang->applicants_page_charaname}
-						</td>
-						<td class="thead" width="33%">
-                        {$lang->applicants_page_extension}
-						</td>
-						<td class="thead" width="33%">
-                        {$lang->applicants_page_correction}
-						</td>
-					</tr>
-					{$applicants}
-				</table>
-					</blockquote>
-            </div>
+                    <table width="100%">
+                        <tr>
+                            <td class="thead" width="33%">
+                            {$lang->applicants_page_charaname}
+                            </td>
+                            <td class="thead" width="33%">
+                            {$lang->applicants_page_extension}
+                            </td>
+                            <td class="thead" width="33%">
+                            {$lang->applicants_page_correction}
+                            </td>
+                        </tr>
+                        {$applicants}
+                    </table>
+                </blockquote>
             {$footer}
         </body>
         
@@ -194,7 +208,6 @@ function applicants_install()
     );
     $db->insert_query("templates", $insert_array);
 
-    //Template applicantUser bauen
     $insert_array = array(
         'title'        => 'applicants_User',
         'template'    => $db->escape_string('<tr style="text-align:center;">
@@ -214,7 +227,6 @@ function applicants_install()
     );
     $db->insert_query("templates", $insert_array);
 
-    //Template applicantHeader bauen
     $insert_array = array(
         'title'        => 'applicants_Header',
         'template'    => $db->escape_string('<div class="red_alert">{$bannerText}</div>'),
@@ -224,7 +236,6 @@ function applicants_install()
     );
     $db->insert_query("templates", $insert_array);
 
-    //Template applicantsButton bauen
     $insert_array = array(
         'title'        => 'applicants_Button',
         'template'    => $db->escape_string('<a href="applicants.php?applicantId={$applicantUid}"><i class="fas fa-check" title="Steckbrief übernehmen?"></i></a>'),
@@ -234,7 +245,6 @@ function applicants_install()
     );
     $db->insert_query("templates", $insert_array);
 
-    //Template applicantsButtonThread bauen
     $insert_array = array(
         'title'        => 'applicants_ButtonThread',
         'template'    => $db->escape_string('<a href="applicants.php?applicantId={$applicantUid}"><i class="fas fa-check" title="Steckbrief übernehmen?"></i></a>'),
@@ -244,7 +254,6 @@ function applicants_install()
     );
     $db->insert_query("templates", $insert_array);
 
-    //Template applicantsReversePage bauen
     $insert_array = array(
         'title'        => 'applicants_ReversePage',
         'template'    => $db->escape_string('<html>
@@ -298,11 +307,9 @@ function applicants_install()
 
 function applicants_is_installed()
 {
-    global $db, $mybb;
-    if ($db->table_exists("applicants")) {
-        return true;
-    }
-    return false;
+    global $db;
+
+    return $db->table_exists('applicants');
 }
 
 function applicants_uninstall()
@@ -332,15 +339,15 @@ function applicants_activate()
     find_replace_templatesets("showthread", "#" . preg_quote('{$newreply}') . "#i", '{$correctionButton} {$newreply}');
 
     if (function_exists('myalerts_is_activated') && myalerts_is_activated()) {
-		$alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::createInstance($db, $cache);
+        $alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::createInstance($db, $cache);
 
-		$alertType = new MybbStuff_MyAlerts_Entity_AlertType();
-		$alertType->setCanBeUserDisabled(false);
-		$alertType->setCode("applicants");
-		$alertType->setEnabled(true);
+        $alertType = new MybbStuff_MyAlerts_Entity_AlertType();
+        $alertType->setCanBeUserDisabled(false);
+        $alertType->setCode("applicants");
+        $alertType->setEnabled(true);
 
-		$alertTypeManager->add($alertType);
-	}
+        $alertTypeManager->add($alertType);
+    }
 }
 
 function applicants_deactivate()
@@ -359,10 +366,10 @@ function applicants_deactivate()
     find_replace_templatesets("showthread", "#" . preg_quote('{$correctionButton}') . "#i", '', 0);
 
     if (function_exists('myalerts_is_activated') && myalerts_is_activated()) {
-		$alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::getInstance();
+        $alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::getInstance();
 
-		$alertTypeManager->deleteByCode('applicants');
-	}
+        $alertTypeManager->deleteByCode('applicants');
+    }
 }
 
 $plugins->add_hook('forumdisplay_thread', 'applicants_forumdisplay_thread');
@@ -386,22 +393,35 @@ function setCorrectionButton($applicantUid, $templateName)
 {
     global $mybb, $db, $templates, $thread;
     $applicationFid = intval($mybb->settings['applicants_fid']);
-    $teamaccount = intval($mybb->settings['applicants_teamaccount']);
-    $returnArray = array('correctionButton' => '', 'corrector' => '');
-    //einfügen vom Button zur Korrekturübernahme
-    if ($thread['fid'] == $applicationFid) { //nur wenn Bewerbungsbereich ausführen
-        $correctors = $db->fetch_array($db->simple_select("applicants", "corrector", "uid = '$applicantUid'"));
-        if ($correctors['corrector'] != null) {
-            $returnArray['corrector'] = '<div><b>Korrigiert: </b>' . $correctors['corrector'] . '</div>';
-        }
-        if ($mybb->usergroup['canmodcp'] == 1 && $applicantUid != $teamaccount && $returnArray['corrector'] == '') {
-            $returnArray['correctionButton'] = eval($templates->render($templateName));
-        }
+    $returnArray = ['correctionButton' => '', 'corrector' => ''];
+
+    if ($thread['fid'] != $applicationFid) {
+        return $returnArray;
     }
+
+    $teamaccount = intval($mybb->settings['applicants_teamaccount']);
+
+    $corrector = $db->fetch_field($db->simple_select("applicants", "corrector", "uid = '$applicantUid'"), 'corrector');
+    if ($corrector != null) {
+        $returnArray['corrector'] = '<div><b>Korrigiert: </b>' . $corrector . '</div>';
+    }
+    if ($mybb->usergroup['canmodcp'] == 1 && $applicantUid != $teamaccount && $returnArray['corrector'] == '') {
+        $returnArray['correctionButton'] = eval($templates->render($templateName));
+    }
+
     return $returnArray;
 }
 
-//Benachrichtung bei auslaufender Frist
+$plugins->add_hook('datahandler_user_delete_start ', 'applicants_datahandler_user_delete_start ');
+function applicants_datahandler_user_delete_start($userDeleteObject)
+{
+    global $db;
+
+    $eleteUids = implode(',', $userDeleteObject->delete_uids);
+    $db->delete_query('applicants', "uid IN({$eleteUids})");
+}
+
+// alert -> expired application
 $plugins->add_hook('global_intermediate', 'applicants_alert');
 function applicants_alert()
 {
@@ -409,15 +429,18 @@ function applicants_alert()
 
     $today = new DateTime(date("Y-m-d", time())); //heute
     $alertDays = intval($mybb->settings['applicants_alert']);
-    $email = $mybb->user['email'];
     $deadlineDays = "";
     $deadlineText = "";
     $lang->load('applicants');
 
-    updateDatabase();
+    $uids = [];
+    $mainUid = $mybb->user['as_uid'] == 0 ? $mybb->user['uid'] : (int) $mybb->user['as_uid'];
+    $query = $db->simple_select('users', 'uid', 'as_uid = ' . $mainUid . ' or uid = ' . $mainUid);
+    while ($result = $db->fetch_array($query)) {
+        $uids[] = (int)$result['uid'];
+    }
 
-    // Meldung zusammenbauen
-    $allApplicants = $db->simple_select('applicants', 'uid, expirationDate', "email = '" . $email . "' AND corrector IS null");
+    $allApplicants = $db->simple_select('applicants', 'uid, expirationDate', "uid in(" . implode(',', $uids) . ") AND corrector IS null");
     while ($applicant = $db->fetch_array($allApplicants)) {
         $expiration = new DateTime($applicant['expirationDate']);
         $interval = $expiration->diff($today);
@@ -449,7 +472,7 @@ function applicants_alert()
         eval("\$header_applicants .= \"" . $templates->get("applicants_Header") . "\";");
     }
 
-    //nur für Teammitglieder: abgelaufene Bewerbungen
+    // only for team members: expired applications
     if ($mybb->usergroup['canmodcp'] == 1) {
         $deadlineUserCount = (int) $db->fetch_array($db->simple_select('applicants', 'COUNT(uid)', "expirationDate < '" . $today->format('Y-m-d') . "' AND corrector IS null"))["COUNT(uid)"];
         if ($deadlineUserCount == 1) {
@@ -464,91 +487,36 @@ function applicants_alert()
     }
 }
 
-function updateDatabase()
-{
-    global $db, $mybb;
-    $applicantGid = intval($mybb->settings['applicants_gid']);
-    $timeForApplication = intval($mybb->settings['applicants_time']);
-
-    //gelöschte User rausschmeißen
-    $allDeletedApplicants = $db->query("SELECT uid
-        FROM " . TABLE_PREFIX . "applicants
-        WHERE uid NOT IN(
-        SELECT uid 
-        FROM " . TABLE_PREFIX . "users)");
-
-    while ($deletedApplicants = $db->fetch_array($allDeletedApplicants)) {
-        $db->delete_query('applicants', 'uid = ' . $deletedApplicants['uid']);
-    }
-
-    // alte Bewerber rausschmeißen
-    $allExApplicants = $db->query("SELECT uid
-        FROM " . TABLE_PREFIX . "users
-        WHERE usergroup != $applicantGid AND uid IN(
-        SELECT uid 
-        FROM " . TABLE_PREFIX . "applicants)");
-
-    while ($exApplicant = $db->fetch_array($allExApplicants)) {
-        $db->delete_query('applicants', 'uid = ' . $exApplicant['uid']);
-    }
-
-    if ($timeForApplication != 0) {
-        // neue Bewerber hinzufügen
-        $allApplicants = $db->query("SELECT uid, email, regdate
-        FROM " . TABLE_PREFIX . "users
-        WHERE usergroup = $applicantGid AND uid NOT IN(
-            SELECT uid 
-            FROM " . TABLE_PREFIX . "applicants
-        )");
-
-        while ($applicant = $db->fetch_array($allApplicants)) {
-            $applicationDeadline = new DateTime();
-            $applicationDeadline->setTimestamp($applicant['regdate']);
-            date_add($applicationDeadline, date_interval_create_from_date_string($timeForApplication . 'days'));
-
-            $insertApplicant = array(
-                'uid' => $applicant['uid'],
-                'email' => $applicant['email'],
-                'expirationDate' => $applicationDeadline->format('Y-m-d'),
-                'extensionCtr' => 0
-            );
-
-            $db->insert_query('applicants', $insertApplicant);
-        }
-    }
-}
-
 $plugins->add_hook("global_start", "applicants_myalerts");
 function applicants_myalerts()
 {
-	global $mybb, $lang;
+    global $mybb, $lang;
 
-	if (!$mybb->user['uid']) return;
+    if (!$mybb->user['uid']) return;
 
-	if (function_exists('myalerts_is_activated') && myalerts_is_activated()) {
-		class Applicants_AlertFormatter extends MybbStuff_MyAlerts_Formatter_AbstractFormatter
-		{
+    if (function_exists('myalerts_is_activated') && myalerts_is_activated()) {
+        class Applicants_AlertFormatter extends MybbStuff_MyAlerts_Formatter_AbstractFormatter
+        {
 
-			public function init()
-			{
-				
-			}
+            public function init()
+            {
+            }
 
-			public function formatAlert(MybbStuff_MyAlerts_Entity_Alert $alert, array $outputAlert)
-			{
+            public function formatAlert(MybbStuff_MyAlerts_Entity_Alert $alert, array $outputAlert)
+            {
                 return sprintf(
                     'Ich hab die Korrektur deiner Bewerbung übernommen :)',
                     $outputAlert['dateline']
                 );
-			}
+            }
 
-			public function buildShowLink(MybbStuff_MyAlerts_Entity_Alert $alert)
-			{
-				return get_profile_link($alert->getFromUserId());
-			}
-		}
+            public function buildShowLink(MybbStuff_MyAlerts_Entity_Alert $alert)
+            {
+                return get_profile_link($alert->getFromUserId());
+            }
+        }
 
-		$formatterManager = MybbStuff_MyAlerts_AlertFormatterManager::getInstance();
-		$formatterManager->registerFormatter(new Applicants_AlertFormatter($mybb, $lang, 'applicants'));
-	}
+        $formatterManager = MybbStuff_MyAlerts_AlertFormatterManager::getInstance();
+        $formatterManager->registerFormatter(new Applicants_AlertFormatter($mybb, $lang, 'applicants'));
+    }
 }
