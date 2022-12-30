@@ -35,7 +35,7 @@ function applicants_install()
     $date = new DateTime(date("d.m.Y", strtotime('+1 hour')));
     $date->setTime(1, 0, 0);
     $task = array(
-        'title' => 'Applciants Reset',
+        'title' => 'Applicants Reset',
         'description' => 'Automatically resets all fields from the applicants plugin',
         'file' => 'applicants',
         'minute' => 0,
