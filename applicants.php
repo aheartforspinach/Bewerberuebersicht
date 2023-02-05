@@ -54,7 +54,7 @@ if ($mybb->get_input('action', MyBB::INPUT_STRING) === 'reverse') {
         $applicationDeadline->setTimestamp(time());
         $extendTime = $mybb->get_input('applicationStart', MyBB::INPUT_STRING) === 'yes' ? $timeForApplication : $timeframeExtension;
         date_add($applicationDeadline, date_interval_create_from_date_string($extendTime . 'days'));
-        $update = array('expirationDate' => $applicationDeadline->format('Y-m-d'));
+        $update = array('expirationDate' => $applicationDeadline->format('Y-m-d'), 'extensionCtr' => 0);
         $db->update_query('applicants', $update, 'uid = ' . $db->escape_string($uid));
     }
 
@@ -105,6 +105,7 @@ while ($applicant = $db->fetch_array($allApplicants)) {
         $correctionButton = $isApplicationThere ? $lang->sprintf($lang->applicants_submitpage_correct_application, $applicant['uid']) : '';
     }
 
+    $reverseButton = '';
     if ($mybb->usergroup['canmodcp'] == 1) {
         $reverseButton = $lang->sprintf($lang->applicants_submitpage_revert, $applicant['uid']);
     }

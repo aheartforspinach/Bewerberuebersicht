@@ -11,7 +11,7 @@ function applicants_info()
         "description" => "Gibt automatisch an wie lange ein Bewerber noch Zeit für den Steckbrief hat",
         "author" => "aheartforspinach",
         "authorsite" => "https://github.com/aheartforspinach",
-        "version" => "1.2",
+        "version" => "1.2.1",
         "compatibility" => "18*"
     );
 }
@@ -264,40 +264,38 @@ function applicants_install()
         <body>
         {$header}
         <form action="applicants.php" method="post">
-    <table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
-    <tr>
-    <td class="thead" colspan="2"><strong>{$lang->applicants_submitpage_title}</strong></td>
-    </tr>
+        <table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
         <tr>
-            <td colspan="2" class="tcat"><center>{$infoText}</center></td>
+        <td class="thead" colspan="2"><strong>{$lang->applicants_submitpage_title}</strong></td>
         </tr>
-        <tr>
-            <td width="50%">
-                <center>{$lang->applicants_submitpage_extension}<br>
-                <input type="radio" id="start_yes" name="applicationStart" value="yes">
-    <label for="start_yes">{$lang->applicants_submitpage_yes_start}</label><br>
-                    <input type="radio" id="start_yes_extend" name="applicationStart" value="yes_extend">
-    <label for="start_yes_extend">{$lang->applicants_submitpage_yes_extend}</label><br>
-                    <input type="radio" id="start_no" name="applicationStart" value="no" checked>
-    <label for="start_no">{$lang->applicants_submitpage_no}</label><br></center>
+            <tr>
+                <td colspan="2" class="tcat"><center>{$infoText}</center></td>
+            </tr>
+            <tr>
+                <td width="50%">
+                    <center>{$lang->applicants_submitpage_extension}<br>
+                    <input type="radio" id="start_yes" name="applicationStart" value="yes">
+          <label for="start_yes">{$lang->applicants_submitpage_yes}</label><br>
+                        <input type="radio" id="start_no" name="applicationStart" value="no" checked>
+          <label for="start_no">{$lang->applicants_submitpage_no}</label><br></center>
+                    </td>
+                <td width="50%">
+                    <center>{$lang->applicants_submitpage_control}<br>
+                    <input type="radio" id="control_yes" name="applicationControl" value="yes">
+          <label for="control_yes">{$lang->applicants_submitpage_yes}</label><br>
+                        <input type="radio" id="control_no" name="applicationControl" value="no" checked>
+          <label for="control_no">{$lang->applicants_submitpage_no}</label><br></center>
                 </td>
-            <td width="50%">
-                <center>{$lang->applicants_submitpage_control}<br>
-                <input type="radio" id="control_yes" name="applicationControl" value="yes">
-    <label for="control_yes">{$lang->applicants_submitpage_yes}</label><br>
-                    <input type="radio" id="control_no" name="applicationControl" value="no" checked>
-    <label for="control_no">{$lang->applicants_submitpage_no}</label><br></center>
-            </td>
-        </tr>
-    </table>
-    <br />
-    <div align="center"><input type="submit" class="button" name="submit" value="{$lang->applicants_submitpage_submit}" /></div>
-    <input type="hidden" name="action" value="reverse" />
-    <input type="hidden" name="aid" value="{$aid}" />
-    </form>
-    {$footer}
-    </body>
-    </html>'),
+            </tr>
+        </table>
+        <br />
+        <div align="center"><input type="submit" class="button" name="submit" value="{$lang->applicants_submitpage_submit}" /></div>
+        <input type="hidden" name="action" value="reverse" />
+        <input type="hidden" name="aid" value="{$aid}" />
+        </form>
+        {$footer}
+        </body>
+        </html>'),
         'sid'        => '-2',
         'version'    => '',
         'dateline'    => TIME_NOW
@@ -429,6 +427,10 @@ function applicants_alert()
 {
     global $db, $mybb, $templates, $header_applicants, $lang;
 
+    if ($mybb->user['uid'] == 0) {
+        return;
+    }
+
     $today = new DateTime(date("Y-m-d", time())); //heute
     $alertDays = intval($mybb->settings['applicants_alert']);
     $deadlineDays = "";
@@ -506,9 +508,11 @@ function applicants_myalerts()
 
             public function formatAlert(MybbStuff_MyAlerts_Entity_Alert $alert, array $outputAlert)
             {
+                $dateline = array_key_exists('dateline', $outputAlert) ? $outputAlert['dateline'] : '';
+
                 return sprintf(
                     'Ich hab die Korrektur deiner Bewerbung übernommen :)',
-                    $outputAlert['dateline']
+                    $dateline
                 );
             }
 
